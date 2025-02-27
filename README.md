@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Authentication Project
 
-## Getting Started
+Este proyecto es una aplicación web basada en Next.js que implementa autenticación completa utilizando NextAuth.js, Prisma y PostgreSQL.
 
-First, run the development server:
+## Tecnologías utilizadas
+
+- **Next.js 14**: Framework de React con Server Components
+- **NextAuth.js**: Para autenticación con credenciales
+- **Prisma**: ORM para interactuar con la base de datos
+- **PostgreSQL**: Base de datos relacional
+- **Tailwind CSS**: Para estilos
+- **Docker**: Para contenerizar la base de datos
+
+## Requisitos
+
+- Node.js 18 o superior
+- Docker y Docker Compose
+- npm o yarn
+
+## Configuración inicial
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <url-del-repositorio>
+cd poc-auth-nextjs
+```
+
+### 2. Instalar dependencias
+
+```bash
+npm install
+# o
+yarn install
+```
+
+### 3. Configurar variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+
+```
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mydb?schema=public"
+
+# NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=tu-secreto-seguro-aqui
+```
+
+### 4. Iniciar la base de datos con Docker
+
+```bash
+docker-compose up -d
+```
+
+Este comando iniciará un contenedor de PostgreSQL con las credenciales configuradas en el archivo docker-compose.yml.
+
+### 5. Ejecutar migraciones de Prisma
+
+```bash
+npx prisma migrate dev
+```
+
+Esto creará las tablas necesarias en la base de datos según el esquema definido en `prisma/schema.prisma`.
+
+### 6. Generar el cliente de Prisma
+
+```bash
+npx prisma generate
+```
+
+## Ejecutar la aplicación
 
 ```bash
 npm run dev
-# or
+# o
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura del proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+├── prisma/               # Configuración y esquemas de Prisma
+├── public/               # Archivos públicos
+├── src/
+│   ├── app/              # Rutas y pages de Next.js
+│   │   ├── api/          # API routes (NextAuth, registro de usuarios)
+│   │   ├── auth/         # Páginas de autenticación (login, registro)
+│   │   └── dashboard/    # Área protegida
+│   ├── components/       # Componentes reutilizables
+│   │   └── Navbar.tsx    # Barra de navegación
+│   └── libs/             # Utilidades (conexión a DB, etc)
+├── .env                  # Variables de entorno
+├── docker-compose.yml    # Configuración de Docker
+└── tailwind.config.ts    # Configuración de Tailwind
+```
 
-## Learn More
+## Funcionalidades
 
-To learn more about Next.js, take a look at the following resources:
+- **Registro de usuarios**: Los usuarios pueden crear una cuenta con nombre de usuario, correo electrónico y contraseña
+- **Autenticación**: Login con correo y contraseña
+- **Protección de rutas**: Las rutas protegidas solo son accesibles para usuarios autenticados
+- **UI adaptativa**: La interfaz se adapta según el estado de autenticación del usuario
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Solución de problemas comunes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Error con Server y Client Components
 
-## Deploy on Vercel
+Si encuentras errores como:
+```
+Error: Event handlers cannot be passed to Client Component props.
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Asegúrate de que los componentes que utilizan hooks o manejadores de eventos estén marcados con `'use client'` al inicio del archivo.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Problemas con Prisma
+
+Si tienes problemas con Prisma, puedes reiniciar la base de datos y las migraciones con:
+
+```bash
+npx prisma migrate reset
+```
+
+### Problemas con Docker
+
+Si la base de datos no se conecta correctamente:
+
+```bash
+# Detener los contenedores
+docker-compose down
+
+# Eliminar volúmenes
+docker-compose down -v
+
+# Iniciar de nuevo
+docker-compose up -d
+```
+
+## Notas de desarrollo
+
+- El formulario de registro incluye validación del lado del cliente utilizando react-hook-form
+- Las contraseñas se almacenan hasheadas en la base de datos usando bcrypt
+- El navbar muestra opciones diferentes según el estado de autenticación del usuario
+
+## Próximas mejoras
+
+- Añadir proveedores de autenticación social (Google, GitHub)
+- Implementar recuperación de contraseña
+- Añadir perfiles de usuario
+- Mejorar la experiencia móvil
