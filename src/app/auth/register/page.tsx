@@ -1,83 +1,38 @@
 "use client"
 import {useForm} from "react-hook-form"
-import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect } from "react"
+import useAuthStore from "@/stores/useAuthStore"
 
 function RegisterPage() {
     const {register, handleSubmit, formState: {errors}, watch} = useForm()
     const router = useRouter()
-    const [apiError, setApiError] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
+    
+    // Use Zustand store
+    const { registerWithCredentials, registerWithGoogle, isLoading, error: apiError, clearErrors } = useAuthStore()
+    
+    // Clear errors when component unmounts
+    useEffect(() => {
+        return () => {
+            clearErrors()
+        }
+    }, [clearErrors])
     
     const onSubmit = handleSubmit(async (data) => {
         if(data.password !== data.confirmPassword) {
-            return setApiError("Passwords do not match")
+            return;
         }
         
-        setIsLoading(true)
-        setApiError("")
+        await registerWithCredentials(data.username, data.email, data.password);
         
-        try {
-            const res = await fetch('/api/auth/register', {
-                method: "POST",
-                body: JSON.stringify({
-                    username: data.username,
-                    email: data.email,
-                    password: data.password
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            
-            const resJson = await res.json()
-            
-            if (!res.ok) {
-                // Handle API error
-                setApiError(resJson.message || "Registration failed. Please try again.")
-                setIsLoading(false)
-                return
-            }
-            
-            // If registration successful, automatically log in
-            const loginResult = await signIn("credentials", {
-                email: data.email,
-                password: data.password,
-                redirect: false
-            })
-            
-            if (loginResult?.error) {
-                setApiError("Registration successful but auto-login failed. Please try logging in manually.")
-                setIsLoading(false)
-                return
-            }
-            
-            // Redirect to dashboard after successful login
+        // Handle redirection after successful registration
+        if (!apiError) {
             router.push("/dashboard")
             router.refresh()
-        } catch (error) {
-            console.error("Registration error:", error)
-            setApiError("An unexpected error occurred. Please try again.")
-            setIsLoading(false)
         }
     })
     
     const password = watch("password", "");
-    
-    const handleGoogleSignUp = async () => {
-        try {
-            setIsLoading(true)
-            setApiError("")
-            
-            await signIn("google", { callbackUrl: "/dashboard" })
-            
-        } catch (error) {
-            console.error("Google sign up error:", error)
-            setApiError("Could not sign up with Google")
-            setIsLoading(false)
-        }
-    }
     
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -229,7 +184,7 @@ function RegisterPage() {
                     
                     <div className="mt-6">
                         <button
-                            onClick={handleGoogleSignUp}
+                            onClick={() => registerWithGoogle()}
                             disabled={isLoading}
                             className={`flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >

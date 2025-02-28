@@ -1,56 +1,32 @@
 "use client"
 import { useForm } from "react-hook-form"
-import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect } from "react"
+import useAuthStore from "@/stores/useAuthStore"
 
 const LoginPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm()
   const router = useRouter()
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-
+  
+  // Use Zustand store
+  const { loginWithCredentials, loginWithGoogle, isLoading, error, clearErrors } = useAuthStore()
+  
+  // Clear errors when component unmounts
+  useEffect(() => {
+    return () => {
+      clearErrors()
+    }
+  }, [clearErrors])
+  
   const onSubmit = handleSubmit(async (data) => {
-    try {
-      setIsLoading(true)
-      setError("")
-      
-      const res = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false
-      })
-
-      if (res?.error) {
-        setError("Invalid credentials")
-        setIsLoading(false)
-        return
-      }
-
-      if (res?.ok) {
-        router.push("/dashboard")
-        router.refresh()
-      }
-    } catch (error) {
-      console.error(error)
-      setError("An unexpected error occurred")
-      setIsLoading(false)
+    await loginWithCredentials(data.email, data.password)
+    
+    // Handle redirection after successful login
+    if (!error) {
+      router.push("/dashboard")
+      router.refresh()
     }
   })
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsLoading(true)
-      setError("")
-      
-      await signIn("google", { callbackUrl: "/dashboard" })
-      
-    } catch (error) {
-      console.error("Google sign in error:", error)
-      setError("Could not sign in with Google")
-      setIsLoading(false)
-    }
-  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -168,7 +144,7 @@ const LoginPage = () => {
           
           <div className="mt-6">
             <button
-              onClick={handleGoogleSignIn}
+              onClick={() => loginWithGoogle()}
               disabled={isLoading}
               className={`flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >

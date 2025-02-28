@@ -1,15 +1,13 @@
 "use client"
 
-import { signOut } from "next-auth/react"
+import useAuthStore from "@/stores/useAuthStore"
 
 const SignOutButton = () => {
-  const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: "/" })
-  }
+  const { logout } = useAuthStore()
 
   return (
     <button 
-      onClick={handleSignOut} 
+      onClick={logout} 
       className="text-gray-700 hover:text-indigo-600 font-medium"
     >
       Logout
