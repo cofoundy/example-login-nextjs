@@ -5,7 +5,10 @@ import { useEffect, useState } from "react"
 import useAuthStore from "@/stores/useAuthStore"
 
 function RegisterPage() {
-    const {register, handleSubmit, formState: {errors}, watch} = useForm()
+    const {register, handleSubmit, formState: {errors}, watch} = useForm({
+        // This option makes validation happen as the user types
+        mode: "onChange"
+    })
     const router = useRouter()
     
     // Password visibility state
@@ -36,7 +39,12 @@ function RegisterPage() {
         }
     })
     
+    // Watch both password and confirmPassword for real-time validation
     const password = watch("password", "");
+    const confirmPassword = watch("confirmPassword", "");
+    
+    // Calculate password match status for real-time feedback
+    const passwordsMatch = !confirmPassword || password === confirmPassword;
     
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -177,7 +185,7 @@ function RegisterPage() {
                                 <input
                                     id="confirm-password"
                                     type={showConfirmPassword ? "text" : "password"}
-                                    className={`relative block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ${errors.confirmPassword ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6`}
+                                    className={`relative block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ${!passwordsMatch || errors.confirmPassword ? 'ring-red-500' : confirmPassword ? 'ring-green-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6`}
                                     placeholder="Confirm Password"
                                     {...register("confirmPassword", {
                                         required: {
@@ -204,10 +212,36 @@ function RegisterPage() {
                                         </svg>
                                     )}
                                 </button>
+                                
+                                {/* Password match indicator */}
+                                {confirmPassword && (
+                                    <span className="absolute right-9 top-1/2 transform -translate-y-1/2">
+                                        {passwordsMatch ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-500">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-500">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        )}
+                                    </span>
+                                )}
                             </div>
                             {errors.confirmPassword && (
                                 <span className="text-red-500 text-sm mt-1 block">
                                     {errors.confirmPassword.message?.toString()}
+                                </span>
+                            )}
+                            {/* Show real-time password match status */}
+                            {confirmPassword && !passwordsMatch && !errors.confirmPassword && (
+                                <span className="text-red-500 text-sm mt-1 block">
+                                    Passwords do not match
+                                </span>
+                            )}
+                            {confirmPassword && passwordsMatch && (
+                                <span className="text-green-500 text-sm mt-1 block">
+                                    Passwords match
                                 </span>
                             )}
                         </div>
