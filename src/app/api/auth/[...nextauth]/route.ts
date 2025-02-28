@@ -1,7 +1,19 @@
 import prisma from "@/libs/db"
-import NextAuth from "next-auth"
+import NextAuth, { DefaultSession, Session } from "next-auth"
 import CredentialProviders from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from "bcrypt"
+import { JWT } from "next-auth/jwt"
+import { Account } from "next-auth"
+
+// Extend the Session type using declaration merging
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id?: string;
+    } & DefaultSession["user"]
+  }
+}
 
 export const authOptions = {
     providers:[
@@ -33,11 +45,28 @@ export const authOptions = {
                     name: userFound.username
                 }
             }
+        }),
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
         })
     ],
     session: {
         strategy: "jwt" as const,
-        
+    },
+    callbacks: {
+        async signIn({ account }: { account: Account | null }) {
+            // Allow OAuth without email verification
+            if (account?.provider !== "credentials") return true;
+            
+            return true;
+        },
+        async session({ session, token }: { session: Session, token: JWT }) {
+            if (session.user) {
+                session.user.id = token.sub;
+            }
+            return session;
+        }
     },
     pages: {
         signIn: "/auth/login",
