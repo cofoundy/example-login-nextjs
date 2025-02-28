@@ -81,7 +81,14 @@ const useAuthStore = create<AuthState>((set) => ({
         return;
       }
       
-      // Auto login after successful registration
+      // Check if verification email was sent
+      if (data.isVerificationEmailSent) {
+        // Redirect to verification page
+        window.location.href = `/verify?email=${encodeURIComponent(email)}`;
+        return;
+      }
+      
+      // Auto login after successful registration (if no verification is needed)
       const loginRes = await signIn("credentials", {
         email,
         password,
@@ -96,7 +103,8 @@ const useAuthStore = create<AuthState>((set) => ({
         return;
       }
       
-      // Keep isLoading true because we're redirecting
+      // Keep isLoading true because we're redirecting to dashboard
+      window.location.href = "/dashboard";
       
     } catch (error) {
       console.error("Registration error:", error);
@@ -108,7 +116,12 @@ const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ isLoading: true, error: null });
       
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { 
+        callbackUrl: "/dashboard",
+        // Add a provider query param to identify this as a Google registration
+        // This will be used by the register API to auto-verify Google users
+        query: { provider: "google" }
+      });
       
       // No need to set isLoading to false as we're redirecting
       

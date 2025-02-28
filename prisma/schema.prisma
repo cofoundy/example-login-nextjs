@@ -18,10 +18,12 @@ model User {
   email         String    @unique
   username      String?   @unique
   password      String?   // Optional for OAuth users
+  isVerified    Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
+  verificationCodes VerificationCode[]
 }
 
 model Account {
@@ -57,4 +59,15 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model VerificationCode {
+  id        Int      @id @default(autoincrement())
+  code      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  
+  @@unique([userId, code])
 }
