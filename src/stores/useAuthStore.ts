@@ -32,11 +32,19 @@ const useAuthStore = create<AuthState>((set) => ({
       });
       
       if (res?.error) {
+        // Handle specific error for unverified users
+        if (res.error === "UNVERIFIED_USER") {
+          // We'll use NextAuth error page parameters to handle this
+          window.location.href = `/auth/login?error=UNVERIFIED_USER&email=${encodeURIComponent(email)}`;
+          return;
+        }
+        
         set({ error: "Invalid credentials", isLoading: false });
         return;
       }
       
       // Keep isLoading true because we're redirecting
+      window.location.href = "/dashboard";
       
     } catch (error) {
       console.error("Login error:", error);
