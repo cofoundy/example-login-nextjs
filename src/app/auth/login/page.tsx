@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import useAuthStore from "@/stores/useAuthStore"
+import Link from "next/link"
 
 const LoginPage = () => {
   const { register, handleSubmit, formState: { errors }, getValues } = useForm()
@@ -192,9 +193,9 @@ const LoginPage = () => {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Forgot your password?
-              </a>
+              </Link>
             </div>
           </div>
 

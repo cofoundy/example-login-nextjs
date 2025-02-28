@@ -1,0 +1,17 @@
+RULES:
+- ALWAYS use the existing ui components. Use shadcn properly to import new components
+- Use zustand for complex state management
+- npx prisma migrate dev and generate accordingly after schema.prisma file changes
+- Use conventional commit
+- Push your features only if asked.
+- Use Zod for field validation
+- Follow the React Email component structure for all email templates
+- Use consistent NextResponse format in API routes with proper error handling
+- Always implement proper loading states and error feedback in forms
+- Use the shared Prisma client from @/libs/db in all database operations
+- Always send notification emails for security-sensitive account changes
+- Use bcrypt for password hashing with a salt round of 10
+- Implement client-side validation before API calls
+- Maintain consistent UI between related features (verification/reset password)
+- Use environment variables for all sensitive configuration
+- Follow the existing pattern of progressive disclosure in multi-step processes

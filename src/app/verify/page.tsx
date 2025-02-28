@@ -126,7 +126,7 @@ export default function VerifyPage() {
         </div>
 
         {error && (
-          <div className={`bg-${error.includes('sent') ? 'green' : 'red'}-50 border border-${error.includes('sent') ? 'green' : 'red'}-200 text-${error.includes('sent') ? 'green' : 'red'}-600 rounded-md p-3 text-sm`}>
+          <div className={error.includes('sent') ? "bg-green-50 border border-green-200 text-green-600 rounded-md p-3 text-sm" : "bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm"}>
             {error}
           </div>
         )}
