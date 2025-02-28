@@ -1,42 +1,86 @@
 # Next.js Authentication Project
 
-Este proyecto es una aplicación web basada en Next.js que implementa autenticación completa utilizando NextAuth.js, Prisma y PostgreSQL.
+A comprehensive Next.js application implementing a complete authentication system with email verification, password management, and protected routes using modern web technologies.
 
-## Tecnologías utilizadas
+## Technology Stack
 
-- **Next.js 14**: Framework de React con Server Components
-- **NextAuth.js**: Para autenticación con credenciales
-- **Prisma**: ORM para interactuar con la base de datos
-- **PostgreSQL**: Base de datos relacional
-- **Tailwind CSS**: Para estilos
-- **Docker**: Para contenerizar la base de datos
+- **Next.js 14**: React framework with App Router architecture
+- **TypeScript**: For type safety and better developer experience
+- **NextAuth.js**: Authentication framework with multiple providers
+- **Zustand**: Lightweight state management solution
+- **Prisma**: Type-safe ORM for database operations
+- **PostgreSQL**: Relational database for user data
+- **Tailwind CSS**: Utility-first CSS framework
+- **Shadcn/UI**: High-quality, accessible UI components
+- **Resend**: Email delivery service for verification
+- **React Email**: React components for email templates
+- **Docker**: Containerization for development and deployment
 
-## Requisitos
+## Features
 
-- Node.js 18 o superior
-- Docker y Docker Compose
-- npm o yarn
+- **Multi-provider Authentication**
+  - Email/password authentication with secure storage
+  - Google OAuth integration
+  - Expandable to other OAuth providers
 
-## Configuración inicial
+- **Email Verification**
+  - OTP (One-Time Password) verification system
+  - Email templates for verification and welcome emails
+  - Resend integration for reliable email delivery
 
-### 1. Clonar el repositorio
+- **User Experience**
+  - Real-time form validation with detailed feedback
+  - Password strength requirements (8+ chars, uppercase, number)
+  - Password visibility toggle
+  - Responsive design for all device sizes
+
+- **Security**
+  - Protected routes with middleware
+  - Email verification enforcement
+  - Secure password hashing with bcrypt
+  - JWTs with custom claims
+
+- **State Management**
+  - Centralized auth state with Zustand
+  - Clean separation of UI and business logic
+  - Persistent sessions with NextAuth
+  
+- **Code Quality**
+  - TypeScript for type safety
+  - Component-based architecture
+  - Consistent code style and organization
+
+## Requirements
+
+- Node.js 18 or higher
+- Docker and Docker Compose
+- npm, yarn, or pnpm
+
+## Setup & Installation
+
+### 1. Clone the repository
 
 ```bash
-git clone <url-del-repositorio>
-cd poc-auth-nextjs
+git clone <repository-url>
+cd example-login-nextjs
 ```
 
-### 2. Instalar dependencias
+### 2. Install dependencies
 
 ```bash
+# Using npm
 npm install
-# o
+
+# Using Yarn
 yarn install
+
+# Using pnpm (recommended)
+pnpm install
 ```
 
-### 3. Configurar variables de entorno
+### 3. Environment variables
 
-Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+Create a `.env` file with the following variables:
 
 ```
 # Database
@@ -44,109 +88,124 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mydb?schema=public"
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=tu-secreto-seguro-aqui
+NEXTAUTH_SECRET=your-secret-here
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Email (Resend)
+RESEND_API_KEY=your-resend-api-key
+FROM_EMAIL=your-email@example.com
+FROM_NAME=Your App Name
 ```
 
-### 4. Iniciar la base de datos con Docker
+### 4. Start the database
 
 ```bash
 docker-compose up -d
 ```
 
-Este comando iniciará un contenedor de PostgreSQL con las credenciales configuradas en el archivo docker-compose.yml.
-
-### 5. Ejecutar migraciones de Prisma
+### 5. Run Prisma migrations
 
 ```bash
 npx prisma migrate dev
 ```
 
-Esto creará las tablas necesarias en la base de datos según el esquema definido en `prisma/schema.prisma`.
-
-### 6. Generar el cliente de Prisma
+### 6. Start the development server
 
 ```bash
-npx prisma generate
-```
-
-## Ejecutar la aplicación
-
-```bash
+# Using npm
 npm run dev
-# o
+
+# Using Yarn
 yarn dev
+
+# Using pnpm
+pnpm dev
 ```
 
-La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
-## Estructura del proyecto
+## Project Structure
 
 ```
-├── prisma/               # Configuración y esquemas de Prisma
-├── public/               # Archivos públicos
+├── prisma/                  # Database schema and migrations
+├── public/                  # Static assets
 ├── src/
-│   ├── app/              # Rutas y pages de Next.js
-│   │   ├── api/          # API routes (NextAuth, registro de usuarios)
-│   │   ├── auth/         # Páginas de autenticación (login, registro)
-│   │   └── dashboard/    # Área protegida
-│   ├── components/       # Componentes reutilizables
-│   │   └── Navbar.tsx    # Barra de navegación
-│   └── libs/             # Utilidades (conexión a DB, etc)
-├── .env                  # Variables de entorno
-├── docker-compose.yml    # Configuración de Docker
-└── tailwind.config.ts    # Configuración de Tailwind
+│   ├── app/                 # Next.js App Router pages
+│   │   ├── api/             # API routes
+│   │   │   ├── auth/        # Auth API endpoints
+│   │   │   └── ...          # Other API endpoints
+│   │   ├── auth/            # Auth pages (login, register)
+│   │   ├── verify/          # Email verification
+│   │   ├── dashboard/       # Protected user area
+│   │   └── ...
+│   ├── components/          # React components
+│   │   ├── emails/          # Email templates
+│   │   └── ui/              # UI components
+│   ├── lib/                 # Utility functions
+│   │   ├── email.ts         # Email sending utilities
+│   │   └── db.ts            # Database client
+│   ├── middleware.ts        # NextAuth middleware
+│   └── stores/              # Zustand stores
+│       └── useAuthStore.ts  # Authentication state
+├── .env                     # Environment variables
+└── ...                      # Config files
 ```
 
-## Funcionalidades
+## Development Guidelines
 
-- **Registro de usuarios**: Los usuarios pueden crear una cuenta con nombre de usuario, correo electrónico y contraseña
-- **Autenticación**: Login con correo y contraseña
-- **Protección de rutas**: Las rutas protegidas solo son accesibles para usuarios autenticados
-- **UI adaptativa**: La interfaz se adapta según el estado de autenticación del usuario
+### State Management with Zustand
 
-## Solución de problemas comunes
+- Use the `useAuthStore` for all authentication-related state
+- Maintain a single source of truth for auth state
+- Keep store actions pure and separate from UI components
 
-### Error con Server y Client Components
-
-Si encuentras errores como:
-```
-Error: Event handlers cannot be passed to Client Component props.
+```typescript
+// Example usage in components
+const { loginWithCredentials, isLoading, error } = useAuthStore();
 ```
 
-Asegúrate de que los componentes que utilizan hooks o manejadores de eventos estén marcados con `'use client'` al inicio del archivo.
+### UI Components
 
-### Problemas con Prisma
+- Use Shadcn/UI components when available
+- Follow Tailwind's utility-first approach
+- Maintain mobile responsiveness
+- Keep accessibility in mind (proper ARIA attributes, keyboard navigation)
 
-Si tienes problemas con Prisma, puedes reiniciar la base de datos y las migraciones con:
+### Form Validation
 
-```bash
-npx prisma migrate reset
-```
+- Use React Hook Form for form management
+- Implement client-side validation with detailed error messages
+- Show validation in real-time using `mode: "onChange"`
+- Password requirements:
+  - Minimum 8 characters
+  - At least one uppercase letter
+  - At least one number
 
-### Problemas con Docker
+### API Routes
 
-Si la base de datos no se conecta correctamente:
+- Implement proper error handling and status codes
+- Validate all input data on the server side
+- Use Prisma transactions when making multiple related updates
 
-```bash
-# Detener los contenedores
-docker-compose down
+### Authentication Flow
 
-# Eliminar volúmenes
-docker-compose down -v
+1. User registers with email/password
+2. Verification email sent with OTP code
+3. User verifies email with OTP
+4. Welcome email sent upon verification
+5. User can now access protected routes
 
-# Iniciar de nuevo
-docker-compose up -d
-```
+## Contributing
 
-## Notas de desarrollo
+1. Create a feature branch from `main`
+2. Make your changes
+3. Write/update tests if applicable
+4. Submit a pull request
+5. Get code review and approval
 
-- El formulario de registro incluye validación del lado del cliente utilizando react-hook-form
-- Las contraseñas se almacenan hasheadas en la base de datos usando bcrypt
-- El navbar muestra opciones diferentes según el estado de autenticación del usuario
+## License
 
-## Próximas mejoras
-
-- Añadir proveedores de autenticación social (Google, GitHub)
-- Implementar recuperación de contraseña
-- Añadir perfiles de usuario
-- Mejorar la experiencia móvil
+[MIT](LICENSE)
