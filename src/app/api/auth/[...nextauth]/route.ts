@@ -11,6 +11,7 @@ declare module "next-auth" {
   interface Session {
     user: {
       id?: string;
+      isVerified?: boolean;
     } & DefaultSession["user"]
   }
 }
@@ -42,7 +43,8 @@ export const authOptions = {
                 return {
                     id: String(userFound.id),
                     email: userFound.email,
-                    name: userFound.username
+                    name: userFound.username,
+                    isVerified: userFound.isVerified
                 }
             }
         }),
@@ -55,21 +57,48 @@ export const authOptions = {
         strategy: "jwt" as const,
     },
     callbacks: {
-        async signIn({ account }: { account: Account | null }) {
+        async signIn({ user, account }) {
             // Allow OAuth without email verification
             if (account?.provider !== "credentials") return true;
+            
+            // For credentials provider, check if user is verified
+            const userRecord = await prisma.user.findUnique({
+                where: { 
+                    id: parseInt(user.id as string)
+                },
+                select: {
+                    isVerified: true
+                }
+            });
+            
+            // If user is not verified, redirect to verification page
+            if (!userRecord?.isVerified) {
+                throw new Error("UNVERIFIED_USER");
+            }
             
             return true;
         },
         async session({ session, token }: { session: Session, token: JWT }) {
             if (session.user) {
                 session.user.id = token.sub;
+                
+                // Add isVerified to session
+                if (token.isVerified !== undefined) {
+                    session.user.isVerified = token.isVerified as boolean;
+                }
             }
             return session;
+        },
+        async jwt({ token, user }) {
+            if (user) {
+                token.isVerified = user.isVerified;
+            }
+            return token;
         }
     },
     pages: {
         signIn: "/auth/login",
+        error: "/auth/login"
     }
 }
 

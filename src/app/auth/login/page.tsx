@@ -1,15 +1,29 @@
 "use client"
 import { useForm } from "react-hook-form"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import useAuthStore from "@/stores/useAuthStore"
 
 const LoginPage = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const { register, handleSubmit, formState: { errors }, getValues } = useForm()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const errorType = searchParams.get("error")
+  
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null)
   
   // Use Zustand store
   const { loginWithCredentials, loginWithGoogle, isLoading, error, clearErrors } = useAuthStore()
+  
+  // Handle NextAuth error parameters from URL
+  useEffect(() => {
+    if (errorType === "UNVERIFIED_USER") {
+      const email = searchParams.get("email")
+      if (email) {
+        setUnverifiedEmail(email)
+      }
+    }
+  }, [errorType, searchParams])
   
   // Clear errors when component unmounts
   useEffect(() => {
@@ -19,6 +33,9 @@ const LoginPage = () => {
   }, [clearErrors])
   
   const onSubmit = handleSubmit(async (data) => {
+    // Save email in case we need to redirect to verification
+    setUnverifiedEmail(data.email)
+    
     await loginWithCredentials(data.email, data.password)
     
     // Handle redirection after successful login
@@ -27,6 +44,36 @@ const LoginPage = () => {
       router.refresh()
     }
   })
+  
+  const handleResendVerification = async () => {
+    const email = unverifiedEmail || getValues("email")
+    
+    if (!email) {
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+      
+      if (response.ok) {
+        router.push(`/verify?email=${encodeURIComponent(email)}`)
+      } else {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to resend verification code")
+      }
+    } catch (err) {
+      console.error("Error resending verification:", err)
+    }
+  }
+
+  // Check if we're handling an unverified user error
+  const isUnverifiedError = errorType === "UNVERIFIED_USER" || error?.includes("not verified") || error?.includes("unverified")
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -43,11 +90,22 @@ const LoginPage = () => {
           </p>
         </div>
 
-        {error && (
+        {isUnverifiedError ? (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4 text-sm">
+            <p className="font-medium">Email verification required</p>
+            <p className="mt-1">Please verify your email address to continue.</p>
+            <button
+              onClick={handleResendVerification}
+              className="mt-2 px-3 py-1.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+            >
+              Resend verification code
+            </button>
+          </div>
+        ) : error ? (
           <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
             {error}
           </div>
-        )}
+        ) : null}
 
         <form className="mt-8 space-y-6" onSubmit={onSubmit}>
           <div className="space-y-4 rounded-md shadow-sm">
