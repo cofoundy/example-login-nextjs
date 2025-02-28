@@ -1,31 +1,70 @@
 "use client"
 import {useForm} from "react-hook-form"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 function RegisterPage() {
     const {register, handleSubmit, formState: {errors}, watch} = useForm()
+    const router = useRouter()
+    const [apiError, setApiError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
     
     const onSubmit = handleSubmit(async (data) => {
         if(data.password !== data.confirmPassword) {
-            console.log("Passwords do not match")
-            return alert("Passwords do not match")
+            return setApiError("Passwords do not match")
         }
-        const res = await fetch('/api/auth/register', {
-            method: "POST",
-            body: JSON.stringify({
-                username: data.username,
-                email: data.email,
-                password: data.password
-            }),
-            headers: {
-                'Content-Type': 'application/json'
+        
+        setIsLoading(true)
+        setApiError("")
+        
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: "POST",
+                body: JSON.stringify({
+                    username: data.username,
+                    email: data.email,
+                    password: data.password
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            
+            const resJson = await res.json()
+            
+            if (!res.ok) {
+                // Handle API error
+                setApiError(resJson.message || "Registration failed. Please try again.")
+                setIsLoading(false)
+                return
             }
-        })
-        const resJson = await res.json()
-        console.log(resJson)
+            
+            // If registration successful, automatically log in
+            const loginResult = await signIn("credentials", {
+                email: data.email,
+                password: data.password,
+                redirect: false
+            })
+            
+            if (loginResult?.error) {
+                setApiError("Registration successful but auto-login failed. Please try logging in manually.")
+                setIsLoading(false)
+                return
+            }
+            
+            // Redirect to dashboard after successful login
+            router.push("/dashboard")
+            router.refresh()
+        } catch (error) {
+            console.error("Registration error:", error)
+            setApiError("An unexpected error occurred. Please try again.")
+            setIsLoading(false)
+        }
     })
     
     const password = watch("password", "");
-    console.log(errors)
+    
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-md space-y-8">
@@ -40,6 +79,13 @@ function RegisterPage() {
                         </a>
                     </p>
                 </div>
+                
+                {apiError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                        <span className="block sm:inline">{apiError}</span>
+                    </div>
+                )}
+                
                 <form className="mt-8 space-y-6" onSubmit={onSubmit}>
                     <div className="space-y-4 rounded-md shadow-sm">
                         <div>
@@ -149,9 +195,10 @@ function RegisterPage() {
                     <div>
                         <button
                             type="submit"
-                            className="group relative flex w-full justify-center rounded-md bg-indigo-600 py-2 px-3 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            disabled={isLoading}
+                            className={`group relative flex w-full justify-center rounded-md py-2 px-3 text-sm font-semibold text-white ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
                         >
-                            Create account
+                            {isLoading ? "Creating account..." : "Create account"}
                         </button>
                     </div>
                 </form>
