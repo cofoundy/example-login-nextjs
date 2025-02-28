@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { sendWelcomeEmail } from '@/lib/email';
 
 const prisma = new PrismaClient();
 
@@ -61,7 +62,16 @@ export async function POST(request: Request) {
       where: { userId: user.id },
     });
 
-    return NextResponse.json({ message: "Email verified successfully" });
+    // Send welcome email
+    await sendWelcomeEmail({
+      to: user.email,
+      userName: user.username || undefined
+    });
+
+    return NextResponse.json({ 
+      message: "Email verified successfully",
+      welcomeEmailSent: true
+    });
   } catch (error) {
     console.error("Verification error:", error);
     return NextResponse.json(

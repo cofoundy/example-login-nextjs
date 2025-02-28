@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { VerificationEmail } from '@/components/emails/VerificationEmail';
+import { WelcomeEmail } from '@/components/emails/WelcomeEmail';
 import * as React from 'react';
 
 // Make sure to set RESEND_API_KEY in your .env file
@@ -63,6 +64,47 @@ export const sendVerificationEmail = async ({
     return { success: true, id: data?.id };
   } catch (error) {
     console.error('Verification email error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+};
+
+/**
+ * Send a welcome email after account verification
+ */
+export const sendWelcomeEmail = async ({
+  to,
+  userName,
+}: {
+  to: string;
+  userName?: string;
+}) => {
+  try {
+    // Skip sending emails if Resend API key is not set
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('Skipping welcome email: No RESEND_API_KEY');
+      return { success: true, id: 'dev-mode-no-email-sent' };
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: SENDER,
+      to,
+      subject: 'Welcome to our platform!',
+      react: React.createElement(WelcomeEmail, { 
+        userName
+      }) as React.ReactElement,
+    });
+
+    if (error) {
+      console.error('Error sending welcome email:', error);
+      throw new Error(error.message || 'Error sending welcome email');
+    }
+
+    return { success: true, id: data?.id };
+  } catch (error) {
+    console.error('Welcome email error:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
