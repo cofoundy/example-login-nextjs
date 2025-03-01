@@ -1,13 +1,19 @@
-import { Metadata } from "next";
-import { UserTable } from "@/components/admin/UserTable";
-import { RefreshButton } from "@/components/admin/RefreshButton";
+"use client";
 
-export const metadata: Metadata = {
-  title: "User Management",
-  description: "Manage user accounts and permissions",
-};
+import { RefreshButton } from "@/components/admin/RefreshButton";
+import { UserTable } from "@/components/admin/UserTable";
+import { useState } from "react";
 
 export default function UserManagement() {
+  // Use a simple counter state to trigger refreshes
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  
+  // Function to manually trigger a refresh
+  const handleRefresh = () => {
+    // Increment the counter to trigger a new fetch
+    setRefreshCounter(prev => prev + 1);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -18,10 +24,11 @@ export default function UserManagement() {
           </p>
         </div>
         
-        <RefreshButton />
+        <RefreshButton onRefresh={handleRefresh} />
       </div>
       
-      <UserTable />
+      {/* Pass the counter as a prop to force re-rendering */}
+      <UserTable key={`user-table-${refreshCounter}`} />
     </div>
   );
 } 

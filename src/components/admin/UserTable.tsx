@@ -37,14 +37,12 @@ import {
   ShieldOff, 
   User,
   X,
-  Loader2,
-  AlertCircle
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type User = {
   id: number;
@@ -85,32 +83,32 @@ export function UserTable() {
     limit: 10,
     pages: 0
   });
-  const [showInactiveWarning, setShowInactiveWarning] = useState(true);
   
-  // Fetch users from the API
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch(`/api/admin/users?page=${pagination.page}&limit=${pagination.limit}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-        
-        const data = await response.json();
-        setUsers(data.users);
-        setPagination(data.pagination);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setError('Failed to load users. Please try again later.');
-      } finally {
-        setLoading(false);
+  // Function to fetch users - defined outside useEffect so it can be called elsewhere
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/admin/users?page=${pagination.page}&limit=${pagination.limit}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
       }
+      
+      const data = await response.json();
+      setUsers(data.users);
+      setPagination(data.pagination);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError('Failed to load users. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-    
+  };
+  
+  // Fetch users when component mounts or pagination changes
+  useEffect(() => {
     fetchUsers();
   }, [pagination.page, pagination.limit]);
   
@@ -237,7 +235,7 @@ export function UserTable() {
         <Button 
           variant="outline" 
           className="ml-4"
-          onClick={() => setPagination(prev => ({ ...prev }))} // Trigger a refresh
+          onClick={() => fetchUsers()}
         >
           Retry
         </Button>
@@ -247,23 +245,6 @@ export function UserTable() {
   
   return (
     <div className="space-y-4">
-      {showInactiveWarning && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Important Change</AlertTitle>
-          <AlertDescription className="flex justify-between items-center">
-            <span>New users are now inactive by default and require manual activation.</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setShowInactiveWarning(false)}
-            >
-              Dismiss
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-      
       <div className="rounded-md border">
         <Table>
           <TableHeader>
