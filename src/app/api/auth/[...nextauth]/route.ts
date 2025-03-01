@@ -105,14 +105,15 @@ export const authOptions: AuthOptions = {
                                 name: user.name || null,
                                 profileImage: user.image || null,
                                 isVerified: true, // Auto-verify OAuth users
-                                role: "USER"      // Default role for OAuth users
+                                role: "USER",      // Default role for OAuth users
+                                isActive: false     // Set OAuth users as inactive by default
                             }
                         });
                         
                         // Add role to user object from session
                         user.role = "USER";
                         user.isVerified = true;
-                        user.isActive = true;
+                        user.isActive = false;
                         
                         // Create account record linking the provider
                         if (account) {
@@ -171,13 +172,17 @@ export const authOptions: AuthOptions = {
                 throw new Error("UNVERIFIED_USER");
             }
             
+            // Check if user is active
+            if (userRecord?.isActive === false) {
+                throw new Error("INACTIVE_USER");
+            }
+            
             // Store role information in the user object
             if (userRecord?.role) {
                 user.role = userRecord.role;
             }
             
-            // #TODO: The isActive field doesn't affect login currently
-            // This will be used for restricting feature access in the future
+            // The isActive field now affects login as we check it above
             
             return true;
         },

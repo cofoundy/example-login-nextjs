@@ -40,6 +40,7 @@ export async function POST(req: Request) {
                 email: data.email,
                 password: await bcrypt.hash(data.password, 10),
                 isVerified: false, // Set as unverified initially
+                isActive: false,   // Explicitly set as inactive by default
             }
         })
         

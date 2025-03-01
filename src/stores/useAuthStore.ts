@@ -39,6 +39,12 @@ const useAuthStore = create<AuthState>((set) => ({
           return;
         }
         
+        // Handle specific error for inactive users
+        if (res.error === "INACTIVE_USER") {
+          window.location.href = `/auth/login?error=INACTIVE_USER&email=${encodeURIComponent(email)}`;
+          return;
+        }
+        
         set({ error: "Invalid credentials", isLoading: false });
         return;
       }

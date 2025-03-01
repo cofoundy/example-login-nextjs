@@ -27,6 +27,11 @@ const LoginPage = () => {
     }
   }, [errorType, searchParams])
   
+  // Is this an unverified user error?
+  const isUnverifiedError = errorType === "UNVERIFIED_USER" && unverifiedEmail;
+  // Is this an inactive user error?
+  const isInactiveError = errorType === "INACTIVE_USER";
+  
   // Clear errors when component unmounts
   useEffect(() => {
     return () => {
@@ -74,9 +79,6 @@ const LoginPage = () => {
     }
   }
 
-  // Check if we're handling an unverified user error
-  const isUnverifiedError = errorType === "UNVERIFIED_USER" || error?.includes("not verified") || error?.includes("unverified")
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
@@ -102,6 +104,11 @@ const LoginPage = () => {
             >
               Resend verification code
             </button>
+          </div>
+        ) : isInactiveError ? (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4 text-sm">
+            <p className="font-medium">Account inactive</p>
+            <p className="mt-1">Please contact support for assistance.</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">

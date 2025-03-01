@@ -11,7 +11,7 @@ const roleSchema = z.object({
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Get current session to verify admin role
@@ -37,7 +37,17 @@ export async function PUT(
     }
     
     const { role } = validation.data;
+    
+    // Properly await the params object before using its properties
+    const params = await context.params;
     const userId = parseInt(params.id);
+    
+    if (isNaN(userId) || userId <= 0) {
+      return NextResponse.json(
+        { error: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
     
     // Ensure we don't demote the last admin
     if (role === "USER") {

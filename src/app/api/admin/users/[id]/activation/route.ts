@@ -12,7 +12,7 @@ const activationSchema = z.object({
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Get current session to verify admin role
@@ -38,7 +38,17 @@ export async function PUT(
     }
     
     const { isActive, activeUntil } = validation.data;
+    
+    // Properly await the params object before using its properties
+    const params = await context.params;
     const userId = parseInt(params.id);
+    
+    if (isNaN(userId) || userId <= 0) {
+      return NextResponse.json(
+        { error: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
     
     // Update user activation status
     const updatedUser = await prisma.user.update({
