@@ -1,8 +1,10 @@
+'use client';
+
 import Link from "next/link"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
 import SignOutButton from "./SignOutButton"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import ProfileAvatar from "./profile/ProfileAvatar"
 import { 
     DropdownMenu, 
     DropdownMenuContent, 
@@ -12,39 +14,38 @@ import {
     DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut } from "lucide-react"
-import prisma from "@/libs/db"
 
-async function Navbar(){
-    const session = await getServerSession(authOptions)
+export default function Navbar() {
+    const { data: session, status } = useSession();
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     
-    // Get user profile data if session exists
-    let profileImage = null;
-    if (session?.user?.email) {
-        const user = await prisma.user.findUnique({
-            where: { email: session.user.email },
-            select: { profileImage: true }
-        });
-        profileImage = user?.profileImage;
-    }
-    
-    // Add cache-busting timestamp to profile image URL
-    const profileImageWithTimestamp = profileImage 
-        ? `${profileImage}?t=${Date.now()}`
-        : null;
-    
-    // Get user initials for avatar fallback
-    const getInitials = () => {
-        if (!session?.user?.name) {
-            return session?.user?.email?.charAt(0).toUpperCase() || 'U';
-        }
+    // Fetch user profile image when session changes
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (session?.user?.email) {
+                try {
+                    setIsLoading(true);
+                    const response = await fetch('/api/user/profile');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setProfileImage(data.user.profileImage);
+                    }
+                } catch (error) {
+                    console.error('Error fetching profile data:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setProfileImage(null);
+                setIsLoading(false);
+            }
+        };
         
-        const nameParts = session.user.name.split(' ');
-        if (nameParts.length === 1) {
-            return nameParts[0].charAt(0).toUpperCase();
+        if (status !== 'loading') {
+            fetchUserProfile();
         }
-        
-        return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
-    };
+    }, [session, status]);
     
     return (
         <nav className="bg-white shadow">
@@ -74,15 +75,14 @@ async function Navbar(){
                                     <li>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger className="focus:outline-none">
-                                                <Avatar className="h-9 w-9 cursor-pointer hover:opacity-80 transition">
-                                                    <AvatarImage 
-                                                        src={session.user?.image || profileImageWithTimestamp || ''} 
-                                                        alt={session.user?.name || session.user?.email || 'User'} 
-                                                    />
-                                                    <AvatarFallback className="bg-indigo-600 text-white">
-                                                        {getInitials()}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                                <ProfileAvatar 
+                                                    name={session.user?.name}
+                                                    email={session.user?.email}
+                                                    profileImage={profileImage}
+                                                    sessionImage={session.user?.image}
+                                                    size="sm"
+                                                    forceRefresh={!isLoading}
+                                                />
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-56">
                                                 <DropdownMenuLabel>
@@ -140,5 +140,3 @@ async function Navbar(){
         </nav>
     )
 }
-
-export default Navbar;
