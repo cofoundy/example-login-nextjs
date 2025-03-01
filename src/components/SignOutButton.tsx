@@ -1,18 +1,18 @@
 "use client"
 
-import useAuthStore from "@/stores/useAuthStore"
+import { signOut } from "next-auth/react"
 
-const SignOutButton = () => {
-  const { logout } = useAuthStore()
+export default function SignOutButton() {
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' })
+  }
 
   return (
     <button 
-      onClick={logout} 
-      className="text-gray-700 hover:text-indigo-600 font-medium"
+      onClick={handleSignOut}
+      className="w-full text-left"
     >
-      Logout
+      Sign Out
     </button>
   )
-}
-
-export default SignOutButton 
+} 
