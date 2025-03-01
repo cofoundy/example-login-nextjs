@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "activeUntil" TIMESTAMP(3),
+ADD COLUMN     "isActive" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'USER';

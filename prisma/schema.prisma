@@ -21,6 +21,9 @@ model User {
   profileImage  String?
   password      String?   // Optional for OAuth users
   isVerified    Boolean   @default(false)
+  role          String    @default("USER")  // New field for role: "USER" or "ADMIN"
+  isActive      Boolean   @default(true)    // New field for account activation status
+  activeUntil   DateTime? // Optional expiration date for active status
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]

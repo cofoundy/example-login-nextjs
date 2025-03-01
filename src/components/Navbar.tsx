@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
 import SignOutButton from "./SignOutButton"
 import ProfileAvatar from "./profile/ProfileAvatar"
+import { AdminLink } from "./ui/AdminLink"
 import { 
     DropdownMenu, 
     DropdownMenuContent, 
@@ -72,6 +73,12 @@ export default function Navbar() {
                                             Dashboard
                                         </Link>
                                     </li>
+                                    
+                                    {/* Admin Link - only shown for admin users */}
+                                    <li>
+                                        <AdminLink />
+                                    </li>
+                                    
                                     <li>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger className="focus:outline-none">

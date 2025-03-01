@@ -15,12 +15,25 @@ declare module "next-auth" {
     user: {
       id?: string;
       isVerified?: boolean;
+      role?: string;
+      isActive?: boolean;
     } & DefaultSession["user"]
   }
   
-  // Extend User type with isVerified property
+  // Extend User type with additional properties
   interface User {
     isVerified?: boolean;
+    role?: string;
+    isActive?: boolean;
+  }
+}
+
+// Extend JWT type
+declare module "next-auth/jwt" {
+  interface JWT {
+    isVerified?: boolean;
+    role?: string;
+    isActive?: boolean;
   }
 }
 
@@ -52,7 +65,9 @@ export const authOptions: AuthOptions = {
                     id: String(userFound.id),
                     email: userFound.email,
                     name: userFound.username,
-                    isVerified: userFound.isVerified
+                    isVerified: userFound.isVerified,
+                    role: userFound.role,
+                    isActive: userFound.isActive
                 }
             }
         }),
@@ -89,9 +104,15 @@ export const authOptions: AuthOptions = {
                                 username: username,
                                 name: user.name || null,
                                 profileImage: user.image || null,
-                                isVerified: true // Auto-verify OAuth users
+                                isVerified: true, // Auto-verify OAuth users
+                                role: "USER"      // Default role for OAuth users
                             }
                         });
+                        
+                        // Add role to user object from session
+                        user.role = "USER";
+                        user.isVerified = true;
+                        user.isActive = true;
                         
                         // Create account record linking the provider
                         if (account) {
@@ -119,6 +140,11 @@ export const authOptions: AuthOptions = {
                                 data: { profileImage: user.image }
                             });
                         }
+                        
+                        // Add role to user object from existing user in database
+                        user.role = existingUser.role;
+                        user.isVerified = existingUser.isVerified;
+                        user.isActive = existingUser.isActive;
                     }
                 } catch (error) {
                     console.error("Error in OAuth sign in:", error);
@@ -134,7 +160,9 @@ export const authOptions: AuthOptions = {
                     id: parseInt(user.id as string)
                 },
                 select: {
-                    isVerified: true
+                    isVerified: true,
+                    isActive: true,
+                    role: true
                 }
             });
             
@@ -143,15 +171,29 @@ export const authOptions: AuthOptions = {
                 throw new Error("UNVERIFIED_USER");
             }
             
+            // Store role information in the user object
+            if (userRecord?.role) {
+                user.role = userRecord.role;
+            }
+            
+            // #TODO: The isActive field doesn't affect login currently
+            // This will be used for restricting feature access in the future
+            
             return true;
         },
         async session({ session, token }: { session: Session, token: JWT }) {
             if (session.user) {
                 session.user.id = token.sub;
                 
-                // Add isVerified to session
+                // Add additional properties to session
                 if (token.isVerified !== undefined) {
                     session.user.isVerified = token.isVerified as boolean;
+                }
+                if (token.role !== undefined) {
+                    session.user.role = token.role as string;
+                }
+                if (token.isActive !== undefined) {
+                    session.user.isActive = token.isActive as boolean;
                 }
                 
                 // If session doesn't have an image but user has a profileImage in database, add it
@@ -171,8 +213,29 @@ export const authOptions: AuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.isVerified = user.isVerified;
+                token.role = user.role;
+                token.isActive = user.isActive;
             }
             return token;
+        },
+        async redirect({ url, baseUrl }) {
+            // Handle relative URLs - make them absolute
+            if (url.startsWith('/')) {
+                url = `${baseUrl}${url}`;
+            } else if (!url.startsWith('http')) {
+                url = `${baseUrl}/${url}`;
+            }
+            
+            // Check if the URL is the default callback URL (dashboard)
+            // If so, for admin users, redirect to /admin instead
+            // We check jwt token directly since we can't use getServerSession here (circular dependency)
+            if (url === `${baseUrl}/dashboard` || url === `${baseUrl}/`) {
+                // token is not accessible in this callback, so we'll handle redirection in middleware
+                // middleware.ts will check the user role and redirect admins appropriately
+                return url;
+            }
+            
+            return url;
         }
     },
     pages: {
