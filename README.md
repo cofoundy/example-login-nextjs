@@ -28,6 +28,12 @@ A comprehensive Next.js application implementing a complete authentication syste
   - Email templates for verification and welcome emails
   - Resend integration for reliable email delivery
 
+- **User Profile Management**
+  - Update personal information (name, username, email)
+  - Profile image upload and management
+  - Support for Google profile images with cross-origin handling
+  - Seamless OAuth profile data integration
+
 - **User Experience**
   - Real-time form validation with detailed feedback
   - Password strength requirements (8+ chars, uppercase, number)
@@ -39,9 +45,11 @@ A comprehensive Next.js application implementing a complete authentication syste
   - Email verification enforcement
   - Secure password hashing with bcrypt
   - JWTs with custom claims
+  - Proper handling of third-party authentication provider data
 
 - **State Management**
   - Centralized auth state with Zustand
+  - Profile management with dedicated store
   - Clean separation of UI and business logic
   - Persistent sessions with NextAuth
   
@@ -139,17 +147,20 @@ The application will be available at [http://localhost:3000](http://localhost:30
 │   │   │   └── ...          # Other API endpoints
 │   │   ├── auth/            # Auth pages (login, register)
 │   │   ├── verify/          # Email verification
+│   │   ├── profile/         # User profile management
 │   │   ├── dashboard/       # Protected user area
 │   │   └── ...
 │   ├── components/          # React components
 │   │   ├── emails/          # Email templates
+│   │   ├── profile/         # Profile management components
 │   │   └── ui/              # UI components
 │   ├── lib/                 # Utility functions
 │   │   ├── email.ts         # Email sending utilities
 │   │   └── db.ts            # Database client
 │   ├── middleware.ts        # NextAuth middleware
 │   └── stores/              # Zustand stores
-│       └── useAuthStore.ts  # Authentication state
+│       ├── useAuthStore.ts  # Authentication state
+│       └── useProfileStore.ts # Profile management state
 ├── .env                     # Environment variables
 └── ...                      # Config files
 ```
@@ -159,12 +170,14 @@ The application will be available at [http://localhost:3000](http://localhost:30
 ### State Management with Zustand
 
 - Use the `useAuthStore` for all authentication-related state
-- Maintain a single source of truth for auth state
+- Use the `useProfileStore` for profile management state
+- Maintain a single source of truth for auth and profile state
 - Keep store actions pure and separate from UI components
 
 ```typescript
 // Example usage in components
 const { loginWithCredentials, isLoading, error } = useAuthStore();
+const { updateProfile, updateProfileImage } = useProfileStore();
 ```
 
 ### UI Components
@@ -197,6 +210,13 @@ const { loginWithCredentials, isLoading, error } = useAuthStore();
 3. User verifies email with OTP
 4. Welcome email sent upon verification
 5. User can now access protected routes
+
+### Profile Image Handling
+
+- Supports both uploaded images and OAuth provider images
+- Proper handling of Google profile images with `referrerPolicy="no-referrer"`
+- Cache-busting for local images to ensure fresh content
+- Graceful fallback to initials when no image is available
 
 ## Contributing
 
