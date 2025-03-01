@@ -76,12 +76,6 @@ cd example-login-nextjs
 ### 2. Install dependencies
 
 ```bash
-# Using npm
-npm install
-
-# Using Yarn
-yarn install
-
 # Using pnpm (recommended)
 pnpm install
 ```
@@ -106,6 +100,10 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 RESEND_API_KEY=your-resend-api-key
 FROM_EMAIL=your-email@example.com
 FROM_NAME=Your App Name
+
+# Admin User (for create-admin script)
+DEFAULT_ADMIN_EMAIL=admin@example.com
+DEFAULT_ADMIN_PASSWORD=your-secure-admin-password
 ```
 
 ### 4. Start the database
@@ -114,26 +112,53 @@ FROM_NAME=Your App Name
 docker-compose up -d
 ```
 
-### 5. Run Prisma migrations
+### 5. Setup Prisma and Database
+
+For first-time setup:
 
 ```bash
-npx prisma migrate dev
+# Generate Prisma client
+pnpm prisma generate
+
+# Run migrations to set up database schema
+pnpm prisma migrate dev
+
+# Optional: Launch Prisma Studio to view and edit data
+pnpm prisma studio
 ```
 
-### 6. Start the development server
+During development, after making changes to the schema:
 
 ```bash
-# Using npm
-npm run dev
+# Apply migrations after schema changes
+pnpm prisma migrate dev
+```
+Observation: This will erase the existing database and create a new one.
 
-# Using Yarn
-yarn dev
+### 6. Create admin user
 
-# Using pnpm
+```bash
+pnpm create-admin
+```
+
+### 7. Start the development server
+
+```bash
 pnpm dev
 ```
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
+
+### Complete Startup Process Summary
+
+1. Start PostgreSQL container: `docker-compose up -d`
+2. Initial setup only: 
+   - `pnpm prisma generate` 
+   - `pnpm prisma migrate dev`
+   - Optional: `pnpm prisma studio`
+3. Create admin user: `pnpm create-admin`
+4. Start development server: `pnpm dev`
+5. When making schema changes: `pnpm prisma migrate dev`
 
 ## Project Structure
 
