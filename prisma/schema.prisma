@@ -29,6 +29,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   verificationCodes VerificationCode[]
+  activities    Activity[]
 }
 
 model Account {
@@ -75,4 +76,15 @@ model VerificationCode {
   expiresAt DateTime
   
   @@unique([userId, code])
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?  @db.Text
+  ipAddress String?
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
 }
